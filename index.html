@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feliz Cumpleaños Yami</title>
+  <style>
+    :root {
+      --bg-color: #0b1429;
+      --card-bg: #1e293b;
+      --accent: #e249f7;
+      --text-main: #f8fafc;
+      --text-muted: #ae0cbd;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Player Global */
+    .player-card {
+      background: var(--card-bg);
+      padding: 1.2rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    .player-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+
+    /* Tracklist */
+    .tracklist {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .track-item {
+      background: var(--card-bg);
+      padding: 1rem;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .track-item:hover {
+      transform: translateY(-2px);
+      background: #283548;
+    }
+
+    .track-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .track-number {
+      font-weight: bold;
+      color: var(--accent);
+      width: 20px;
+    }
+
+    .track-details h3 {
+      font-size: 1rem;
+    }
+
+    .track-details p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .btn-scene {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    /* Modal / Ventana Emergente */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      padding: 1rem;
+      z-index: 1000;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 12px;
+      max-width: 480px;
+      width: 100%;
+      position: relative;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .scene-content h2 {
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+      font-size: 1.3rem;
+    }
+
+    .scene-image {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin: 0.8rem 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .scene-content p {
+      line-height: 1.5;
+      color: #cbd5e1;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>10 Canciones para Yami 𖹭</h1>
+      <p>Haz clic en cualquier canción para escucharla y ver su escena especial.</p>
+    </header>
+
+    <!-- Reproductor de Audio -->
+    <div class="player-card">
+      <div class="player-title" id="current-title">Selecciona una canción</div>
+      <audio id="audio-player" controls>
+        Tu navegador no soporta el reproductor de audio.
+      </audio>
+    </div>
+
+    <!-- Lista de Canciones -->
+    <div class="tracklist" id="tracklist"></div>
+  </div>
+
+  <!-- Ventana Emergente (Modal) -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+      <div class="scene-content" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    const songs = [
+      {
+        id: 1,
+        title: "Eclipsis",
+        artist: "Esperon",
+        src: "musica/eclipsis.mp3",
+        image: "imagenes/eclipsis.jpg",
+        sceneTitle: "En todos los universos",
+        sceneText: "Ambas se sentían tan lejos, pero a la vez tan cerca. Con una sonrisa en los labios, admiraban los mensajes dulces que se dedicaban cada día; ella pensaba en sus ojos y ella en su sonrisa, y aunque estaban separadas por la distancia, se amaban más que a nada en el mundo.<br><br>Se quedaban hablando por horas durante la noche, complementándose de una forma tan perfecta que ella era el sol y ella su luna: ella iluminaba los días con su alegría, y ella reflejaba esa misma luz cálida en la mirada. Su amor no tenía final; ambas prometieron quererse en esta vida e incluso después de ella. No importaba lo que los demás dijeran sobre las relaciones a distancia, lo único verdaderamente real era el amor y la confianza tan linda que se tenían.<br><br>—Mira, te tengo un regalo —sonreía ella muy feliz a través de la pantalla.<br>—A ver —dijo ella, dejando de lado sus deberes para fijar toda su atención en la cámara.<br><br>Ella acercó un dibujo de ambas, sonriendo y tomadas de la mano. Ella amaba profundamente el arte de su pareja; al verlo, sintió un vuelco en el pecho y un calor suave subiendo por su rostro, acompañado de una sonrisa nerviosa.<br><br>—¿Te gustó? —preguntó ella con ilusión.<br>—Es un dibujo hermoso, mi amor. Me encanta —respondió, mirándola profundamente a través de la cámara con esa sonrisa que era exclusivamente para ella.<br><br>En ese instante, el tiempo pareció detenerse. Como un eclipse donde el sol y la luna al fin coinciden en el mismo punto del cielo, la distancia entre las pantallas simplemente desapareció. Supieron que no importaba el espacio, el tiempo ni las circunstancias: en esta vida, en esta historia y en todos los universos posibles, siempre se elegirían la una a la otra."
+      },
+      {
+        id: 2,
+        title: "Perfecta",
+        artist: "Miranda!",
+        src: "musica/perfecta.mp3",
+        image: "imagenes/perfecta.jpg",
+        sceneTitle: "Descubriéndote en cada detalle",
+        sceneText: "Todo comenzó con mensajes casuales y risas compartidas en aquel grupo de WhatsApp, pero la curiosidad por conocerse en persona no tardó en llegar. Al verse por primera vez en aquel lugar, la conexión fue inmediata; esa amistad inicial se convirtió rápido en el refugio favorito de ambas, creciendo día con día hasta transformarse en un amor profundo.<br><br>El tiempo juntas les enseñó a conocerse de verdad: aprendieron a descifrar cada uno de sus gestos, sus virtudes, sus manías e incluso sus imperfecciones.<br><br>—A veces siento que tenemos nuestras diferencias o que puedo equivocarme... —comentó ella suavemente, mirándola con sinceridad mientras caminaban tomadas de la mano.<br>—Es que nadie es perfecto —respondió ella, deteniéndose un segundo para quedar frente a su novia y tomar con dulzura sus manos—. Pero lo bonito de nosotras es que siempre sabemos cómo hablar y resolverlo juntas. Conozco cómo eres, conozco tu personalidad y no cambiaría absolutamente nada.<br><br>Ella sonrió con esa ternura que a ella tanto le fascinaba, sintiendo cómo sus palabras le llenaban el corazón. Ella la contempló en silencio por un instante, con la certeza absoluta de que, en medio de cualquier imperfección, ella era perfecta, exactamente lo que siempre había soñado."
+      },
+      {
+       id: 3,
+        title: "Bonsai",
+        artist: "Alan Sutton",
+        src: "musica/bonsai.mp3",
+        image: "imagenes/bonsai.jpg",
+        sceneTitle: "Cuidarnos cada día",
+        sceneText: "Un amor como el suyo no crecía solo por inercia, se construía y se cuidaba a diario con la misma dedicación y paciencia que requiere una obra de arte. En una relación a distancia, cada mensaje de 'buenos días', cada risa compartida y cada llamada nocturna eran el agua constante que mantenía viva su conexión.<br><br>Sin embargo, sabían que no todos los días eran fáciles. A veces el cansancio acumulado, el estrés o las pequeñas frustraciones provocaban malentendidos o días donde las cosas se sentían un poco más pesadas.<br><br>—Sé que hoy fue un día difícil y que tal vez te respondí un poco fría hace rato —comentó ella suavemente durante la llamada, buscando sus ojos a través de la pantalla.<br>—Sí... me sentí un poco triste por eso —confesó ella, dejando escapar un pequeño suspiro y bajando la mirada—. A veces la distancia hace que cualquier cosa se sienta más grande de lo que es.<br>—Lo sé, mi amor —respondió ella con voz cálida—. Pero quiero que recuerdes algo, aunque estemos cansados o nos lleguemos a molestar, jamás quiero irme a dormir estando mal contigo. Mi lugar favorito sigue siendo hablar contigo.<br>Ella sonrió despacio, sintiendo cómo se esfumaba cualquier tensión y la calidez volvía a su pecho.<br>—A mí me pasa igual —dijo ella, mirándola de nuevo con ternura—. Me encanta que siempre busquemos la forma de entenderlo y solucionarlo. No importa qué tan molestas o tristes estemos, al final del día siempre elegimos arreglarlo.<br>—Siempre —asintió ella con una sonrisa sincera—. Porque lo que tenemos es muy valioso y lo cuido todos los días, esté donde esté.<br><br>Entre disculpas sinceras, risas y la paz de escuchados, volvieron a confirmar que no había problema que no pudieran resolver juntas. Aprendieron a proteger su amor diariamente, demostrando que la distancia no es rival para quienes eligen cuidarse con el corazón."
+      },
+      {
+        id: 4,
+        title: "Te Amo y Más",
+        artist: "Diego Luna",
+        src: "musica/te_amo_y_mas.mp3",
+        image: "imagenes/te_amo_y_mas.jpg",
+        sceneTitle: "Una promesa para siempre",
+        sceneText: "Aunque sus caminos ya estaban unidos y no era la primera vez que se confesaban lo que sentían, ella sabía bien que a la persona correcta nunca se le deja de enamorar. No importaba cuántos días pasaran ni cuántas veces se lo hubiera dicho antes, ella siempre merecía escuchar lo valiosa, única y amada que era.<br><br>Aprovechando la tranquilidad de la noche durante una de sus videollamadas, ella la miró con una seriedad tierna en los ojos, de esas que anticipan palabras que salen directo del alma.<br><br>—¿Sabes algo, mi amor? —comenzó a decir ella con voz suave, capturando por completo la atención de su novia.<br>—¿Qué pasa? —preguntó ella sonriendo con curiosidad a través de la pantalla.<br>—Sé que ya te he dicho que te amo muchas veces, pero sé que nunca es suficiente. Quería recordarte hoy que te amo demasiado, más de lo que las palabras o cualquier canción pueden expresar. Cada día que pasa me doy cuenta de la suerte que tengo de tenerte en mi vida.<br>Ella la escuchaba en silencio, sintiendo cómo se le iluminaba el rostro y un brillo especial aparecía en sus ojos.<br>—Le pido a Dios todos los días que te cuide y que nunca nos separemos —continuó ella, mirándola con total devoción—. No me imagino mi futuro sin ti. Te amo hoy, mañana y siempre.<br>—Me vas a hacer llorar de la emoción... —respondió ella, llevando sus manos a las mejillas con una sonrisa llena de felicidad—. Te amo muchísimo, mi vida. Gracias por ser tan linda siempre.<br><br>Aquella noche, las distancias volvieron a perder importancia frente a la certeza de un amor y una promesa sincera que trasciende cualquier frontera."
+      },
+      {
+        id: 5,
+        title: "Perfect",
+        artist: "Ed Sheeran",
+        src: "musica/perfect.mp3",
+        image: "imagenes/perfect.jpg",
+        sceneTitle: "Un sueño hecho realidad",
+        sceneText: "Por fin la distancia quedaba atrás y el mundo entero parecía apagarse para dejarlos solo a los dos. Con la luz suave iluminando la habitación, se abrazaron despacio, dejándose llevar por el ritmo lento de la música. Ella apoyó la cabeza en su pecho mientras sus manos se entrelazaban con suavidad.<br><br>En un momento, ella la tomó suavemente de la cintura para girar despacio y mirarla a los ojos.<br><br>—Te ves realmente preciosa esta noche —le susurró ella al oído, acariciándole el rostro con absoluta ternura.<br>—Ay no, siento que despeinada o con el cansancio no me veo tan bien... —respondió ella con una tímida sonrisa, intentando acomodarse el cabello.<br>—No digas eso, no es cierto —dijo ella, deteniéndose un instante para tomar su cara entre sus manos y obligarla a mirarla—. No solo te ves hermosa hoy, para mí te ves perfecta todo el tiempo, en cualquier momento del día.<br>Ella la miró con los ojos brillantes, sintiendo cómo sus palabras le acariciaban el alma.<br>—Parece un sueño estar así contigo... —susurró ella, abrazándols con más fuerza por el cuello.<br>—Tenerte aquí conmigo es el sueño que siempre esperé —respondió ella, besando suavemente su frente mientras volvían a balancearse al ritmo de la música—. Y la verdad es que cada día que pasa, no puedo evitar enamorarme aún más de ti.<br><br>Bailando lento, abrazadas sin prisa y con el corazón lleno, confirmaron que no había mejor lugar en el mundo que estar juntas."
+      },
+      {
+        id: 6,
+        title: "Enamorado Tuyo",
+        artist: "El Cuarteto de Nos",
+        src: "musica/enamorado_tuyo.mp3",
+        image: "imagenes/enamorado_tuyo.jpg",
+        sceneTitle: "Excusas para no admitirlo",
+        sceneText: "Estar juntas hacía que recordar el principio de todo fuera aún más divertido. Al inicio, cuando los sentimientos empezaron a crecer, ella intentó por todos los medios buscar justificaciones lógicas antes de aceptar lo que realmente estaba pasando, pues se habíia enamorado.<br><br>Caminando juntos entre risas, ella se detuvo, lo miró de reojo con una sonrisa juguetona y decidió molestarla tiernamente con la verdad.<br><br>—A ver, confiesa... —dijo ella, cruzándose de brazos pero con los ojos llenos de picardía—. Al principio ponías mil excusas, ¿verdad?<br>—¿Yo? No, para nada —respondió ella intentando mantener la compostura, aunque una sonrisa delatadora se le escapaba en los labios—. Solo decía que era amabilidad, o que nos llevábamos muy bien.<br>—¡Ajá! Sabía que lo admitirías —se burló ella con cariño—. Te costó un buen rato dejar de poner pretextos.<br>—Está bien, lo admito —dijo ella riendo mientras la tomaba por la cintura para acercarla—. Buscaba cualquier excusa porque me daba miedo aceptar lo obvio, que desde el primer momento me tenías completamente atrapada y no podía dejar de pensar en ti.<br><br>Ella soltó una carcajada dulce y escondió su rostro en el pecho de ella, feliz de saber que, por más excusas que intentó inventar al principio, al final terminó irremediablemente enamorada de ella."
+      },
+      {
+        id: 7,
+        title: "Don",
+        artist: "Miranda!",
+        src: "musica/don.mp3",
+        image: "imagenes/don.jpg",
+        sceneTitle: "La magia de cambiar mi mundo",
+        sceneText: "Antes de que ella llegara, su mundo solía ser un lugar tranquilo y reservado. Su propia timidez la llevaba a refugiarse en una burbuja donde se sentía segura. Sin embargo, ella no se rindió, con paciencia, dulzura y una perseverancia que la dejaba sin palabras, siempre encontraba una excusa o un pretexto para acercarse y sacarle una conversación.<br><br>Poco a poco, sin darse cuenta, esa burbuja terminó por romperse por completo. Ella cambió radicalmente su percepción de las cosas, trayendo color y una luz diferente a sus días.<br><br>Caminando juntos por la calle, ella la miró de reojo mientras le contaba algo con esa energía tan alegre que la caracterizaba. Se detuvo un momento, provocando que ella también se girara con curiosidad.<br><br>—¿Qué pasa? ¿Por qué me miras así? —preguntó ella sonriendo, inclinando un poco la cabeza.<br>—Estaba pensando em cómo fue que dejé que te acercaras tanto —respondió ella con una sonrisa, tomándola suavemente de la mano—. Yo estaba tan metida en mi mundo siendo introvertida, y tú siempre buscabas la forma de hablarme.<br>—Es que sabía que detrás de esa actitud fría, había una chica muy tierna —dijo ella con ternura, apretando su mano.<br>—Cambiaste todo para mí —confesó ella, mirándola con sincera gratitud—. Tienes un don increíble, como si fueras la cura para cualquier mal. No importa qué tan molesto, estresado o triste pueda estar, basta con ver tu sonrisa o escucharte un segundo para que todo se arregle.<br><br>Ella la miró con ternura y la abrazó fuerte por la cintura. En ese abrazo, e{la volvió a confirmar que no solo había roto su burbuja, sino que se había convertido en su lugar favorito en el mundo."
+      },
+      {
+        id: 8,
+        title: "Francés Limón",
+        artist: "Enanitos Verdes",
+        src: "musica/frances_limon.mp3",
+        image: "imagenes/frances_limon.jpg",
+        sceneTitle: "El sabor de nuestros momentos",
+        sceneText: "No siempre hacían falta grandes planes ni fechas especiales para crear recuerdos inolvidables. A veces, las tardes más sencillas eran las que mejor retrataban la esencia de lo que compartían.<br><br>Sentadas juntas bajo una sombra fresca, compartiendo algo sencillo de tomar mientras el tiempo pasaba despacio, ella jugaba distraídamente con sus manos y reía por alguna ocurrencia de la conversación. Ella la observaba en silencio, apreciando cada pequeño gesto, la forma en que acomodaba su cabello, su risa contagiosa y la soltura con la que podían pasar de un tema serio a una tontería en cuestión de segundos.<br><br>—Me encanta esto —dijo ella de pronto, rompiendo la pausa suave en la que habían quedado.<br>—¿El día? —preguntó ella mirándola con curiosidad.<br>—El día, la tarde, pero sobre todo esto que tenemos —respondió con una sonrisa sincera—. Momentos así, tranquilos, donde no necesitamos pretender nada ni hacer nada extraordinario para estar bien.<br>—Es verdad... contigo todo se siente tan natural —asintió ella, apoyando su cabeza suavemente en su hombro.<br>—Cada pareja tiene sus códigos, pero lo nuestro tiene un sabor único —añadió ella, dándole un beso tierno en la coronilla—. Son esos pequeños detalles tuyos, tus ocurrencias y la forma en que nos entendemos casi sin hablar. No lo cambiaría por nada.<br><br>Entre risas compartidas y la complicidad de un día cotidiano, volvieron a comprobar que su amor no dependía de grandes escenarios, sino de la magia que solo ellas dos sabían ponerle a la vida."
+      },
+      {
+        id: 9,
+        title: "Para Enamorarte",
+        artist: "CNCO",
+        src: "musica/para_enamorarte.mp3",
+        image: "imagenes/para_enamorarte.jpg",
+        sceneTitle: "Un plan para todos los días",
+        sceneText: "Haber ganado su corazón y caminar juntas no significaba que la conquista hubiera terminado. Para ella, estar a su lado era un privilegio que merecía ser valorado cada nuevo día, sin dar absolutamente nada por sentado. Mirarla reír, escuchar sus historias y ver cómo se iluminaba su rostro eran recordatorios constantes de por qué se había enamorado en primer lugar.<br><br>Mientras caminaban despacio bajo el atardecer, compartiendo el ritmo tranquilo de sus pasos, ella se detuvo despacio y tiró suavemente de su mano para atraerla hacia ella.<br><br>—¿Qué pasa? —preguntó ella con curiosidad, deteniéndose a su lado y mirándola con una sonrisa dulce.<br>—Estaba pensando en que a veces la gente cree que enamorar a alguien es solo al principio, antes de ser pareja —dijo mirándola fijamente a los ojos, tomando también su otra mano con delicadeza—. Pero contigo no quiero que sea así.<br>—¿Ah sí? ¿Y cómo quieres que sea? —inquirió ella, inclinando ligeramente la cabeza con ternura.<br>—Quiero que sea un plan constante —confesó ella con voz cálida—. Aunque ya seas mi novia y compartamos todo esto, mi meta de cada mañana sigue siendo buscar la forma de hacerte sonreír, cuidarte en tus días difíciles y darte mil razones para que me vuelvas a elegir. No importa cuántos días o años pasen, nunca quiero dejar de enamorarte.<br><br>Las palabras conmovieron su corazón en ella, sus ojos brillaron de emoción y una sonrisa sincera iluminó su rostro. Sin decir nada más, se acercó para darle un abrazo apretado y cariñoso, sintiendo el latido de su corazón. En ese gesto tan simple, ambas confirmaron que su historia no dependía solo del recuerdo de cómo empezó, sino de la hermosa promesa de reconquistarse cada día."
+      },
+      {
+        id: 10,
+        title: "Robarte un Beso",
+        artist: "Carlos Vives & Sebastián Yatra",
+        src: "musica/robarte_un_beso.mp3",
+        image: "imagenes/robarte_un_beso.jpg",
+        sceneTitle: "El momento perfecto",
+        sceneText: "Hay momentos en los que las palabras sobran y solo queda dejarse llevar por lo que siente el corazón. A veces ella intentaba ponerse seria o pensar detenidamente qué decir, pero bastaba con ver la sonrisa traviesa de ella para que se le olvidaran los discursos y solo quisiera sacarle una carcajada. En el pecho de ambas seguían vivas esas mariposas del primer día, esas alas inquietas que se agitaban cada vez que se miraban a los ojos.<br><br>Caminaban juntas disfrutando de una tarde alegre, entre risas contagiosas y bromas compartidas. De pronto, mientras ella se ponía seria tratando de explicarle algo con mucho detalle, ella la interrumpió suavemente, tomándola de la mano para acercarla hacia sí.<br><br>—Oye, te ves muy linda cuando te pones seria —dijo mirándola con una chispa juguetona en los ojos.<br>—No me dejas concentrarme —respondió ella, intentando aguantar el nerviosismo sin lograrlo del todo.<br>—Es que me pierdo en tu mirada y me dan ganas de no decir nada más —confesó ella con una sonrisa tierna, acortando la distancia entre las dos—. Solo quiero darte un beso y se quede grabado para siempre en tus recuerdos.<br><br>Ella no alcanzó a responder, porque ella se inclinó despacio para robarle ese beso sincero y esperado. Fue un instante lleno de magia y alegría donde el tiempo pareció detenerse, sellando en un solo abrazo el reflejo perfecto de su amor."
+      }
+    ];
+
+    const tracklistContainer = document.getElementById('tracklist');
+    const audioPlayer = document.getElementById('audio-player');
+    const currentTitle = document.getElementById('current-title');
+    const modal = document.getElementById('modal');
+    const modalBody = document.getElementById('modal-body');
+
+    // Renderizar la lista
+    songs.forEach((song, index) => {
+      const item = document.createElement('div');
+      item.className = 'track-item';
+      item.innerHTML = `
+        <div class="track-info" onclick="playSong(${index})">
+          <span class="track-number">${song.id}</span>
+          <div class="track-details">
+            <h3>${song.title}</h3>
+            <p>${song.artist}</p>
+          </div>
+        </div>
+        <button class="btn-scene" onclick="openScene(${index})">Ver Escena</button>
+      `;
+      tracklistContainer.appendChild(item);
+    });
+
+    function playSong(index) {
+      const song = songs[index];
+      audioPlayer.src = song.src;
+      currentTitle.innerText = `${song.title} - ${song.artist}`;
+      audioPlayer.play();
+    }
+
+    function openScene(index) {
+      const song = songs[index];
+      modalBody.innerHTML = `
+        <h2>${song.sceneTitle}</h2>
+        <p><strong>Canción:</strong> ${song.title} (${song.artist})</p>
+        <img src="${song.image}" alt="${song.sceneTitle}" class="scene-image" onerror="this.style.display='none'">
+        <p>${song.sceneText}</p>
+      `;
+      modal.classList.add('active');
+    }
+
+    function closeModal() {
+      modal.classList.remove('active');
+    }
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+  </script>
+</body>
+</html>
